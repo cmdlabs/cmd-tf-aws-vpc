@@ -1,25 +1,28 @@
 resource "aws_security_group" "sgforendpoint" {
+  count       = length(var.vpc_endpoints) != 0 ? 1 : 0
   name        = "EndpointSG"
   description = "Allow indbound and outbound traffic for VPC endpoint"
   vpc_id      = aws_vpc.main.id
 }
 
 resource "aws_security_group_rule" "allow_all_ingress" {
+  count             = length(var.vpc_endpoints) != 0 ? 1 : 0
   type              = "ingress"
   from_port         = 0
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.sgforendpoint.id
+  security_group_id = aws_security_group.sgforendpoint[0].id
 }
 
 resource "aws_security_group_rule" "allow_all_egress" {
+  count             = length(var.vpc_endpoints) != 0 ? 1 : 0
   type              = "egress"
   from_port         = 0
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.sgforendpoint.id
+  security_group_id = aws_security_group.sgforendpoint[0].id
 }
 
 resource "aws_vpc_endpoint" "vpc_endpoint" {
@@ -28,7 +31,7 @@ resource "aws_vpc_endpoint" "vpc_endpoint" {
   service_name        = "com.amazonaws.${data.aws_region.current.name}.${each.value}"
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = "true"
-  security_group_ids  = [aws_security_group.sgforendpoint.id]
+  security_group_ids  = [aws_security_group.sgforendpoint[0].id]
   subnet_ids          = aws_subnet.private.*.id
   tags = merge(
     { Name = "${var.vpc_name}-${each.value}-endpoint" },
